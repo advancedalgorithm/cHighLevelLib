@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include "../headers/cFile.h"
 
+#pragma once
+
 typedef struct cFile
 {
     int     status;
@@ -10,18 +12,26 @@ typedef struct cFile
     char    *filepath;
     char    *content;
     long    content_count;
+    char    *buffer;
 
-    long    (*lineCount)(cFile *cF);
+    long    (*lineCount)(struct cFile *cF);
+    void    (*trim)(struct cFile *cF);
+    void*   (*cpyData)(struct cFile *cF, char *dest);
+    void    (*die)(struct cFile *cF);
 } cFile;
 
 
-cFile *__cFile(char *file)
+cFile *cFileInit(char *file)
 {
-    cFile *cF = (cFile *)malloc(sizeof(cFile *) * 255);
-    cF->lineCount = line_count;
+    cFile *cF = (cFile *)malloc(sizeof(cFile));
+    cF->lineCount   = line_count;
+    cF->trim        = _trim;
+    cF->cpyData     = cpy_Data;
+    cF->die         = clean_up;
 
-    cF->filepath = (char *)malloc(sizeof(char *) * strlen(file));
-    memset(cF->filepath, 0, sizeof(cF->filepath));
+    cF->filepath = (char *)malloc(sizeof(char *) * (strlen(file) + 1));
+    memset(cF->filepath, 0, sizeof(char *) * (strlen(cF->filepath) + 1));
+    strcpy(cF->filepath, file);
 
     cF->fd = fopen(file, "r");
     if(cF->fd == NULL) return cF;
@@ -30,13 +40,15 @@ cFile *__cFile(char *file)
     long sz = ftell(cF->fd);
     fseek(cF->fd, 0L, SEEK_SET);
 
-    cF->content_count = (char *)malloc(sizeof(char *) * sz);
-    fread(cF->content, 0, sz, cF->fd);
+    cF->content = (char *)malloc(sizeof(char *) * (sz + 1));
 
+    fread(cF->content, sizeof(char), sz, cF->fd);
     cF->content_count = strlen(cF->content);
+
+    return cF;
 }
 
-long line_count(cFile *cF)
+long line_count(struct cFile *cF)
 {
     long c = 0;
     for(int i = 0; i < strlen(cF->content); i++)
@@ -48,9 +60,36 @@ long line_count(cFile *cF)
     return c;
 }
 
-void clean_up(cFile *cF)
+/*
+*   [@DOC]
+*   void _trim(cFile *cF)
+*
+*   Trim whitespaces
+*/
+void _trim(struct cFile *cF)
+{
+    cF->buffer = (char *)malloc(sizeof(char *) * strlen(cF->content));
+    memset(cF->buffer, 0, strlen(cF->buffer));
+
+    for(int i = 0; i < strlen(cF->content); i++)
+    {
+        if(cF->content[i] != '\r' && cF->content[i] != '\n' && cF->content[i] != '\t')
+            strcat(cF->buffer, &cF->content[i]);
+    }
+
+    memset(cF->content, 0, (strlen(cF->content) + 1));
+    strcpy(cF->content, cF->buffer);
+}
+
+void *cpy_Data(struct cFile *cF, char *dest)
+{
+    dest = strdup(cF->content);
+}
+
+void clean_up(struct cFile *cF)
 {
     fclose(cF->fd);
-    free(cF->filepath);
+    free(cF->buffer);
     free(cF->content);
+    free(cF->filepath);
 }
