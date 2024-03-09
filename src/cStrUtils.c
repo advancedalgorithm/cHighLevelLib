@@ -37,7 +37,7 @@ cString *new_cString(char *data)
 
     c->rmChar           = rm_Char;
     c->rmString         = rm_String;
-    c->replaceString    = replace_String;
+    c->replaceString    = c_replace;
     c->countChar        = count_Char;
     c->countLines       = count_Lines;
     c->trim             = cString_trim;
@@ -111,33 +111,32 @@ char *rm_String(struct cString *s, char *str)
 *
 *   Remove a string from the current buffer
 */
-char *replace_String(struct cString *s, char *str, char *substr)
+char *c_replace(struct cString *s, char *substr, char *replacement)
 {
     if(strlen(s->buffer) > 0)
         free(s->buffer);
 
     s->buffer = (char *)malloc(sizeof(char *) * (strlen(s->data) + 1));
-    memset(s->buffer, 0, sizeof(char *) * (strlen(s->buffer) + 1));
-    
-    int i = 0;
-    while(i < strlen(s->data))
+    memset(s->buffer, 0, sizeof(char *) * (strlen(s->data) + 1));
+
+    for(int i = 0; i < strlen(s->data); i++)
     {
-        if(s->data[i] == str[0] && s->data[i + strlen(str)-1] == str[strlen(str)-1])
+        if(substr[0] == s->data[i] && substr[1] == s->data[i+1])
         {
-            /* Append new string */
-            for(int n = 0; n < strlen(substr); i++) 
-            { if(substr[n] == '\0') break; strncat(s->buffer, &substr[n], 1); }
-            i += strlen(str); 
+                strcat(s->buffer, replacement);
+                i += strlen(substr);
         }
         strncat(s->buffer, &s->data[i], 1);
-        i++;
     }
+    strncat(s->buffer, "\0", 1);
 
+    
     free(s->data);
     s->data = strdup(s->buffer);
 
     return s->buffer;
 }
+
 
 /*
 *   [@DOC]

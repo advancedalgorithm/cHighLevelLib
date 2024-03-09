@@ -11,7 +11,7 @@ typedef struct cString *cz;
 char *rm_String(struct cString *s, char *str);
 char *rm_Char(struct cString *s, char ch);
 void cString_trim(struct cString *s);
-char *replace_String(struct cString *s, char *str, char *substr);
+char *c_replace(struct cString *s, char *substr, char *replacement);
 
 /*
 *   String Counting Functions

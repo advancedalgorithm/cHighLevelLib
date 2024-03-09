@@ -12,7 +12,7 @@ int main()
     printf("\x1b[32mnew_cString(cF->content)->data\x1b[39m =>\r\n%s \r\n", s->data);
 
     char *t = s->replaceString(s, "Jeff", "LawlzSec");
-    printf("\x1b[32mnew_cString(cF->content)->data\x1b[39m =>\r\n%s \r\n", s->data);
+    printf("\x1b[32ms->replaceString(s, \"Jeff\", \"LawlzSec\")\x1b[39m =>\r\n%s \r\n", s->data);
 
     /* Clean up memory blocks */
     s->clean_up(s);
