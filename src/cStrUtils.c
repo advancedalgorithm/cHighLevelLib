@@ -5,6 +5,14 @@
 
 #pragma once
 
+typedef enum
+{
+    NEW_STRING = 0,
+    APPEND_STRING = 1,
+    REMOVE_STRING = 2,
+    EMPTY_STRING = 3
+} STRING_EDIT_T;
+
 typedef struct cString
 {
     char    *data;
@@ -13,6 +21,8 @@ typedef struct cString
     char*   (*rmChar)(struct cString *s, char ch);
     char*   (*rmString)(struct cString *s, char *str);
     char*   (*replaceString)(struct cString *s, char *str, char *substr);
+    char**  (*splitString)(struct cString *s, char delim);
+    int   (*startsWith)(struct cString *s, char *data);
     long    (*countChar)(struct cString *s, char ch);
     long    (*countLines)(struct cString *s);
     void    (*trim)(struct cString *s);
@@ -38,12 +48,19 @@ cString *new_cString(char *data)
     c->rmChar           = rm_Char;
     c->rmString         = rm_String;
     c->replaceString    = c_replace;
+    c->splitString      = split_char;
+    c->startsWith       = str_starts_with;
     c->countChar        = count_Char;
     c->countLines       = count_Lines;
     c->trim             = cString_trim;
     c->clean_up         = clean_up_string;
 
     return c;
+}
+
+cString *edit_string(STRING_EDIT_T *mode, char *n)
+{
+
 }
 
 /* 
@@ -135,6 +152,55 @@ char *c_replace(struct cString *s, char *substr, char *replacement)
     s->data = strdup(s->buffer);
 
     return s->buffer;
+}
+
+/*
+*   [@DOC]
+*   char **split_char(struct cString *s, char delim)
+*
+*   - Split a string with a char
+*/
+char **split_char(struct cString *s, char delim)
+{
+    /* Initialize array and reset the memory block */
+    char **arr = (char **)malloc(sizeof(char *) * (strlen(s->data) + 255));
+
+    /* 
+    *   Null-terminate all cells to avoid 
+    *   doing it at the end of function
+    */
+    memset(arr, '\0', (sizeof(arr) + 1));
+    int idx = 0 ;
+    
+    int sz = strlen(s->data) + 5; // get size for buffer
+    char temp[sz]; // Create a temporary buffer
+    memset(temp, '\0', strlen(temp)); // Empty the allocated memory block
+    
+    for(int i = 0; i <= strlen(s->data); i++)
+    {
+        if(s->data[i] == delim) 
+        {
+            arr[idx] = strdup(temp);
+            memset(temp, '\0', strlen(temp));
+            idx++;
+            i++;
+        }
+        strncat(temp, &s->data[i], 1);
+    }
+
+    return arr;
+}
+
+int str_starts_with(struct cString *s, char *data)
+{
+    if(strlen(data) == 0) return -1;
+
+    if(s->data[0] != data[0])
+        return -1;
+
+    if(s->data[0] == data[0] && s->data[1] == data[1]) return 1;
+
+    return 0;
 }
 
 
